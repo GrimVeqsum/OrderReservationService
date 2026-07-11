@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: order-reservation-postgres
+    environment:
+      POSTGRES_DB: order_reservation_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - order_reservation_pg_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order_user -d order_reservation_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: order-reservation-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_reservation_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_password
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  order_reservation_pg_data:
